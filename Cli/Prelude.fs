@@ -12,3 +12,11 @@ type SimpleResultBuilder() =
     member x.Zero () = Error "error"
 
 let result = SimpleResultBuilder()
+
+
+[<RequireQualifiedAccess>]
+module Result =
+    let fromOption onError opt =
+        match opt with
+        | Some x -> Ok x
+        | None -> Error onError

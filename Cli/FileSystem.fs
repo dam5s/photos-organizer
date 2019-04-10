@@ -3,8 +3,16 @@ module FileSystem
 open System.IO
 
 
+type FilePath =
+    private FilePath of string
+
 type DirPath =
     private DirPath of string
+
+
+[<RequireQualifiedAccess>]
+module FilePath =
+    let value (FilePath path) = path
 
 
 [<RequireQualifiedAccess>]
@@ -35,3 +43,14 @@ module DirPath =
 
     let findOrCreate (path : string) : Result<DirPath, string> =
         path |> findDirectoryOr createDir
+
+    let files (DirPath path) : Result<FilePath seq, string> =
+        try
+            ( path, "*", SearchOption.AllDirectories )
+            |> Directory.GetFiles
+            |> Array.toSeq
+            |> Seq.map FilePath
+            |> Ok
+        with
+        | ex ->
+            Error (sprintf "Error listing files in directory %s. Got %s" path ex.Message)

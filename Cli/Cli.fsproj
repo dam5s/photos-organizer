@@ -6,6 +6,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="MetadataExtractor" Version="2.0.0" />
+
     <Compile Include="Prelude.fs" />
     <Compile Include="FileSystem.fs" />
     <Compile Include="Photos.fs" />
