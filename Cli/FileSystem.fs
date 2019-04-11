@@ -12,7 +12,20 @@ type DirPath =
 
 [<RequireQualifiedAccess>]
 module FilePath =
-    let value (FilePath path) = path
+    let value (FilePath path) =
+        path
+
+    let fileName (FilePath path) =
+        Seq.last (path.Split("/"))
+
+    let move (DirPath destination) (filePath : FilePath) : Result<unit, string> =
+        try
+            let filePathValue = value filePath
+            File.Move(filePathValue, sprintf "%s/%s" destination (fileName filePath))
+            Ok ()
+        with
+        | ex -> Error (sprintf "Moving file %s failed with %s" (value filePath) ex.Message)
+
 
 
 [<RequireQualifiedAccess>]

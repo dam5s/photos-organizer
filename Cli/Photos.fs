@@ -32,18 +32,40 @@ module Exif =
 [<RequireQualifiedAccess>]
 module Photos =
 
+    let private destination (baseDir : DirPath) (date : DateTime) : Result<DirPath, string> =
+        let stringValue = sprintf "%s/%s" (DirPath.value baseDir) (date.ToString "yyyy/MM - MMMM")
+        DirPath.findOrCreate stringValue
+
+    let private fileError filePathValue message =
+        let updatedMessage = sprintf "%s - %s" filePathValue message
+        eprintfn "ERROR - %s" updatedMessage
+        Error updatedMessage
+
+
+    let private organizeFile (toDir : DirPath) (filePath : FilePath) : Result<unit, string> =
+        let filePathValue = FilePath.value filePath
+
+        match Exif.readDateTime filePath with
+        | Error message -> fileError filePathValue message
+        | Ok date ->
+            match destination toDir date with
+            | Error message -> fileError filePathValue message
+            | Ok destinationPath ->
+                match FilePath.move destinationPath filePath with
+                | Error message -> fileError filePathValue message
+                | Ok () ->
+                    printfn "OK - %s -> %s" filePathValue (DirPath.value destinationPath)
+                    Ok ()
+
     let organize (fromDir : DirPath) (toDir : DirPath) : Result<unit, string> =
         result {
-            printfn "Organizing photos from %A to %A..." fromDir toDir
+            printfn "Organizing photos from %A to %A...\n" fromDir toDir
 
             let! files = DirPath.files fromDir
 
-            files
-            |> Seq.iter (fun file ->
-                match Exif.readDateTime file with
-                | Ok date -> printfn "%A has date %A" file date
-                | Error msg -> eprintfn "%A has error %A" file msg
-            )
-
-            return ()
+            return! files
+                    |> Seq.map (organizeFile toDir)
+                    |> Result.sequence
+                    |> Result.map (always ())
+                    |> Result.mapError (always "Some errors were encountered.")
         }
