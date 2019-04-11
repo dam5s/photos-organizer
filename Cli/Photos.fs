@@ -43,19 +43,22 @@ module Photos =
 
 
     let private organizeFile (toDir : DirPath) (filePath : FilePath) : Result<unit, string> =
+        let moveResult =
+            result {
+                let! date = Exif.readDateTime filePath
+                let! destinationPath = destination toDir date
+                let! _ = FilePath.move destinationPath filePath
+                return destinationPath
+            }
+
         let filePathValue = FilePath.value filePath
 
-        match Exif.readDateTime filePath with
-        | Error message -> fileError filePathValue message
-        | Ok date ->
-            match destination toDir date with
-            | Error message -> fileError filePathValue message
-            | Ok destinationPath ->
-                match FilePath.move destinationPath filePath with
-                | Error message -> fileError filePathValue message
-                | Ok () ->
-                    printfn "OK - %s -> %s" filePathValue (DirPath.value destinationPath)
-                    Ok ()
+        match moveResult with
+        | Ok destinationPath ->
+            printfn "OK - %s -> %s" filePathValue (DirPath.value destinationPath)
+            Ok ()
+        | Error message ->
+            fileError filePathValue message
 
     let organize (fromDir : DirPath) (toDir : DirPath) : Result<unit, string> =
         result {
