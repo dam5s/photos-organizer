@@ -4,7 +4,7 @@ open System
 open FileSystem
 
 
-module Exif =
+module private Exif =
     open MetadataExtractor
     open MetadataExtractor.Formats.Exif
     open System.Globalization
@@ -33,14 +33,14 @@ module Exif =
 module Photos =
 
     let private destination (baseDir : DirPath) (date : DateTime) : Result<DirPath, string> =
-        let stringValue = sprintf "%s/%s" (DirPath.value baseDir) (date.ToString "yyyy/MM - MMMM")
-        DirPath.findOrCreate stringValue
+        (DirPath.value baseDir, date.ToString "yyyy/MM-MMMM")
+        ||> sprintf "%s/%s"
+        |> DirPath.findOrCreate
 
     let private fileError filePathValue message =
         let updatedMessage = sprintf "%s - %s" filePathValue message
         eprintfn "ERROR - %s" updatedMessage
         Error updatedMessage
-
 
     let private organizeFile (toDir : DirPath) (filePath : FilePath) : Result<unit, string> =
         let moveResult =
@@ -62,7 +62,7 @@ module Photos =
 
     let organize (fromDir : DirPath) (toDir : DirPath) : Result<unit, string> =
         result {
-            printfn "Organizing photos from %A to %A...\n" fromDir toDir
+            printfn "Organizing photos from %s to %s...\n" (DirPath.value fromDir) (DirPath.value toDir)
 
             let! files = DirPath.files fromDir
 
