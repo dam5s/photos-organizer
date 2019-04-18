@@ -1,6 +1,7 @@
 module Photos
 
 open System
+open System.Text.RegularExpressions
 open FileSystem
 
 
@@ -32,6 +33,23 @@ module private Exif =
 [<RequireQualifiedAccess>]
 module Photos =
 
+    let private readDateTimeFromFilename (filePath : FilePath) : Result<DateTime, string> =
+        let fileName = FilePath.fileName filePath
+        let matches = Regex.Match (fileName, "^[A-Z]+_(\d{4})(\d{2})(\d{2})")
+        let groups = Seq.toList matches.Groups
+
+        match groups with
+        | [ _ ; year ; month ; day ] ->
+            (int year.Value, int month.Value, int day.Value)
+            |> DateTime
+            |> Ok
+        | _ -> Error "Could not extract date from file"
+
+    let private extractDate (filePath : FilePath) : Result<DateTime, string> =
+        match readDateTimeFromFilename filePath with
+        | Error _ -> Exif.readDateTime filePath
+        | ok -> ok
+
     let private destination (baseDir : DirPath) (date : DateTime) : Result<DirPath, string> =
         (DirPath.value baseDir, date.ToString "yyyy/MM-MMMM")
         ||> sprintf "%s/%s"
@@ -45,7 +63,7 @@ module Photos =
     let private organizeFile (toDir : DirPath) (filePath : FilePath) : Result<unit, string> =
         let moveResult =
             result {
-                let! date = Exif.readDateTime filePath
+                let! date = extractDate filePath
                 let! destinationPath = destination toDir date
                 let! _ = FilePath.move destinationPath filePath
                 return destinationPath
