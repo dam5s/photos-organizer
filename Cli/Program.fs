@@ -29,7 +29,7 @@ let main argv =
 
     match commandResult with
     | Ok _ ->
-        printfn "\nOK\n"
+        printfn "OK\n"
         0
     | Error message ->
         eprintfn "%s\nERROR - We encountered some errors while processing the inputs" message
