@@ -28,7 +28,9 @@ let main argv =
         }
 
     match commandResult with
-    | Ok _ -> printfn "\nOK\n" ; 0
-    | Error messages ->
-        eprintfn "\nERROR - We encountered some errors while processing the inputs"
+    | Ok _ ->
+        printfn "\nOK\n"
+        0
+    | Error message ->
+        eprintfn "%s\nERROR - We encountered some errors while processing the inputs" message
         1

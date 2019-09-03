@@ -11,17 +11,32 @@ type DirPath =
 
 
 [<RequireQualifiedAccess>]
+module Path =
+    let private separator =
+        Path.DirectorySeparatorChar.ToString()
+
+    let join (parts: string list) =
+        String.concat separator parts
+
+    let split (path: string) =
+         path.Split(separator)
+
+
+
+[<RequireQualifiedAccess>]
 module FilePath =
     let value (FilePath path) =
         path
 
     let fileName (FilePath path) =
-        Seq.last (path.Split("/"))
+        Seq.last (Path.split path)
 
     let move (DirPath destination) (filePath : FilePath) : Result<unit, string> =
         try
             let filePathValue = value filePath
-            File.Move(filePathValue, sprintf "%s/%s" destination (fileName filePath))
+            let destinationPath = Path.join [ destination ; fileName filePath ]
+
+            File.Move(filePathValue, destinationPath)
             Ok ()
         with
         | ex -> Error (sprintf "Moving file %s failed with %s" (value filePath) ex.Message)
