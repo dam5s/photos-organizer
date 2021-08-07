@@ -35,7 +35,7 @@ module Photos =
 
     let private readDateTimeFromFilename (filePath: FilePath): Result<DateTime, string> =
         let fileName = FilePath.fileName filePath
-        let matches = Regex.Match(fileName, "^[A-Z]+_(\d{4})(\d{2})(\d{2})")
+        let matches = Regex.Match(fileName, "(\d{4})-(\d{2})-(\d{2})")
         let groups = Seq.toList matches.Groups
 
         match groups with
